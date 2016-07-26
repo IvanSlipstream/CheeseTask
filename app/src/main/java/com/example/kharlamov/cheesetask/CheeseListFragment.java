@@ -41,27 +41,36 @@ import java.util.List;
 
 public class CheeseListFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Cheese>> {
 
+    public static final String KEY_CHEESES = "cheeses";
     private static final int LIST_LOADER_ID = 1;
     private RecyclerView mRvCheeses;
-    private ArrayList<String> mCheeseList;
+    private ArrayList<Cheese> mCheeseList;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mRvCheeses = (RecyclerView) inflater.inflate(
                 R.layout.fragment_cheese_list, container, false);
+        if (savedInstanceState != null) {
+            mCheeseList = (ArrayList<Cheese>) savedInstanceState.get(KEY_CHEESES);
+        }
         setupRecyclerView(mRvCheeses);
         return mRvCheeses;
     }
 
     private void setupRecyclerView(RecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        getActivity().getSupportLoaderManager().initLoader(LIST_LOADER_ID, null, this);
+        if (mCheeseList==null) {
+            getActivity().getSupportLoaderManager().initLoader(LIST_LOADER_ID, null, this);
+        }
+        else {
+            mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), mCheeseList));
+        }
     }
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putStringArrayList("cheeses", mCheeseList);
+        outState.putSerializable("cheeses", mCheeseList);
     }
 
     @Override
@@ -72,6 +81,7 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
     @Override
     public void onLoadFinished(Loader<List<Cheese>> loader, List<Cheese> data) {
         mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), data));
+        getActivity().getSupportLoaderManager().destroyLoader(loader.getId());
     }
 
     @Override
@@ -158,6 +168,8 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
         public ListLoader(Context context) {
             super(context);
         }
+
+
 
         @Override
         public List<Cheese> loadInBackground() {
