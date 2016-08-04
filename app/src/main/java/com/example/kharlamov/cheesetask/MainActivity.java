@@ -39,6 +39,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * TODO
@@ -114,9 +115,14 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
 
     private void setupViewPager(ViewPager viewPager) {
         Adapter adapter = new Adapter(getSupportFragmentManager());
-        adapter.addFragment(new CheeseListFragment(), "Category 1");
-        adapter.addFragment(new CheeseListFragment(), "Category 2");
-        adapter.addFragment(new CheeseListFragment(), "Category 3");
+        // passing tab number to each fragment
+        for (int i: new int[]{1, 2, 3}){
+            CheeseListFragment fragment = new CheeseListFragment();
+            Bundle bundle = new Bundle();
+            bundle.putInt(CheeseListFragment.KEY_FRAGMENT_NUMBER, i);
+            fragment.setArguments(bundle);
+            adapter.addFragment(fragment, String.format(Locale.getDefault(), "Category %d", i));
+        }
         viewPager.setAdapter(adapter);
     }
 

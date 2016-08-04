@@ -25,5 +25,6 @@
     the big cheese.</string>
   <string name="checkin">Checkin</string>
   <string name="menu_settings">Settings</string>
+  <string name="no_cheeses_loaded">No cheeses loaded</string>
 
 </resources>

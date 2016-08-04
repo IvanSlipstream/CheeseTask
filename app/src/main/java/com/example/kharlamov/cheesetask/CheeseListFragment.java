@@ -42,35 +42,35 @@ import java.util.List;
 public class CheeseListFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Cheese>> {
 
     public static final String KEY_CHEESES = "cheeses";
-    private static final int LIST_LOADER_ID = 1;
+    public static final String KEY_FRAGMENT_NUMBER = "fragment_number";
     private RecyclerView mRvCheeses;
     private ArrayList<Cheese> mCheeseList;
+    private int loaderId;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mRvCheeses = (RecyclerView) inflater.inflate(
-                R.layout.fragment_cheese_list, container, false);
+        loaderId = getArguments().getInt(KEY_FRAGMENT_NUMBER);
+        View view = inflater.inflate(R.layout.fragment_cheese_list, container, false);
+        mRvCheeses = (RecyclerView) view.findViewById(R.id.recyclerview);
         if (savedInstanceState != null) {
             mCheeseList = (ArrayList<Cheese>) savedInstanceState.get(KEY_CHEESES);
         }
         setupRecyclerView(mRvCheeses);
-        return mRvCheeses;
+        return view;
     }
 
     private void setupRecyclerView(RecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         if (mCheeseList==null) {
-            getActivity().getSupportLoaderManager().initLoader(LIST_LOADER_ID, null, this);
+            getActivity().getSupportLoaderManager().initLoader(loaderId, null, this);
         }
-        else {
-            mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), mCheeseList));
-        }
+        mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), mCheeseList));
     }
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable("cheeses", mCheeseList);
+        outState.putSerializable(KEY_CHEESES, mCheeseList);
     }
 
     @Override
@@ -80,8 +80,9 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
 
     @Override
     public void onLoadFinished(Loader<List<Cheese>> loader, List<Cheese> data) {
-        mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), data));
-        getActivity().getSupportLoaderManager().destroyLoader(loader.getId());
+        if (loader.getId()==loaderId) {
+            mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), data));
+        }
     }
 
     @Override
@@ -96,6 +97,7 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
         private final TypedValue mTypedValue = new TypedValue();
         private int mBackground;
         private List<Cheese> mValues;
+        private boolean mLoadComplete = false;
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
             public Cheese mBoundItem;
@@ -137,29 +139,39 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mBoundItem = mValues.get(position);
-            holder.mTextView.setText(holder.mBoundItem.getName());
+            if (mValues != null) {
+                holder.mBoundItem = getValueAt(position);
+                holder.mTextView.setText(holder.mBoundItem.getName());
 
-            holder.mView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Context context = v.getContext();
-                    Intent intent = new Intent(context, CheeseDetailActivity.class);
-                    intent.putExtra(CheeseDetailActivity.EXTRA_CHEESE, holder.mBoundItem);
+                holder.mView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Context context = v.getContext();
+                        Intent intent = new Intent(context, CheeseDetailActivity.class);
+                        intent.putExtra(CheeseDetailActivity.EXTRA_CHEESE, holder.mBoundItem);
 
-                    context.startActivity(intent);
-                }
-            });
+                        context.startActivity(intent);
+                    }
+                });
 
-            Glide.with(holder.mImageView.getContext())
-                    .load(holder.mBoundItem.getDrawableResId())
-                    .fitCenter()
-                    .into(holder.mImageView);
+                Glide.with(holder.mImageView.getContext())
+                        .load(holder.mBoundItem.getDrawableResId())
+                        .fitCenter()
+                        .into(holder.mImageView);
+            }
+            else {
+                holder.mTextView.setText(R.string.no_cheeses_loaded);
+            }
         }
 
         @Override
         public int getItemCount() {
-            return mValues.size();
+            if (mValues != null) {
+                return mValues.size();
+            }
+            else {
+                return 1;
+            }
         }
     }
 
@@ -169,12 +181,17 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
             super(context);
         }
 
-
+        @Override
+        protected void onStartLoading() {
+            super.onStartLoading();
+            forceLoad();
+        }
 
         @Override
         public List<Cheese> loadInBackground() {
             try {
-                return CheeseApi.listCheeses(30);
+                List<Cheese> result = CheeseApi.listCheeses(30);
+                return result;
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
