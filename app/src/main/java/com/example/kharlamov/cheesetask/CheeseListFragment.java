@@ -50,11 +50,16 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        setRetainInstance(true);
         loaderId = getArguments().getInt(KEY_FRAGMENT_NUMBER);
         View view = inflater.inflate(R.layout.fragment_cheese_list, container, false);
         mRvCheeses = (RecyclerView) view.findViewById(R.id.recyclerview);
         if (savedInstanceState != null) {
-            mCheeseList = (ArrayList<Cheese>) savedInstanceState.get(KEY_CHEESES);
+            try {
+                mCheeseList = (ArrayList<Cheese>) savedInstanceState.get(KEY_CHEESES);
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+            }
         }
         setupRecyclerView(mRvCheeses);
         return view;
@@ -64,8 +69,9 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         if (mCheeseList==null) {
             getActivity().getSupportLoaderManager().initLoader(loaderId, null, this);
+        } else {
+            mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), mCheeseList));
         }
-        mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), mCheeseList));
     }
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -82,6 +88,7 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
     public void onLoadFinished(Loader<List<Cheese>> loader, List<Cheese> data) {
         if (loader.getId()==loaderId) {
             mRvCheeses.setAdapter(new SimpleStringRecyclerViewAdapter(getActivity(), data));
+            mCheeseList = (ArrayList<Cheese>) data;
         }
     }
 
@@ -97,7 +104,6 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
         private final TypedValue mTypedValue = new TypedValue();
         private int mBackground;
         private List<Cheese> mValues;
-        private boolean mLoadComplete = false;
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
             public Cheese mBoundItem;
@@ -190,8 +196,7 @@ public class CheeseListFragment extends Fragment implements LoaderManager.Loader
         @Override
         public List<Cheese> loadInBackground() {
             try {
-                List<Cheese> result = CheeseApi.listCheeses(30);
-                return result;
+                return CheeseApi.listCheeses(30);
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;

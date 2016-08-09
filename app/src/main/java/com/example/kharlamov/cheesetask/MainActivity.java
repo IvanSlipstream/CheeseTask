@@ -17,6 +17,7 @@
 package com.example.kharlamov.cheesetask;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
         mTabLayout.addOnTabSelectedListener(this);
     }
 
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -114,15 +117,16 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        Adapter adapter = new Adapter(getSupportFragmentManager());
         // passing tab number to each fragment
-        for (int i: new int[]{1, 2, 3}){
-            CheeseListFragment fragment = new CheeseListFragment();
-            Bundle bundle = new Bundle();
-            bundle.putInt(CheeseListFragment.KEY_FRAGMENT_NUMBER, i);
-            fragment.setArguments(bundle);
-            adapter.addFragment(fragment, String.format(Locale.getDefault(), "Category %d", i));
-        }
+        Adapter adapter = new Adapter(getSupportFragmentManager());
+
+            for (int i : new int[]{1, 2, 3}) {
+                CheeseListFragment fragment = new CheeseListFragment();
+                Bundle bundle = new Bundle();
+                bundle.putInt(CheeseListFragment.KEY_FRAGMENT_NUMBER, i);
+                fragment.setArguments(bundle);
+                adapter.addFragment(fragment, String.format(Locale.getDefault(), "Category %d", i));
+            }
         viewPager.setAdapter(adapter);
     }
 
