@@ -47,6 +47,8 @@ import java.util.Locale;
  */
 public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSelectedListener {
 
+    public static final String KEY_CURRENT_TAB = "current_tab";
+
     private DrawerLayout mDrawerLayout;
     private int mCurrentTab = 0;
     private TabLayout mTabLayout;
@@ -55,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -90,14 +91,24 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
         mTabLayout.addOnTabSelectedListener(this);
     }
 
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null){
+            mCurrentTab = savedInstanceState.getInt(KEY_CURRENT_TAB, 0);
+        }
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        TabLayout.Tab mTab = mTabLayout.getTabAt(mCurrentTab);
-        if (mTab != null){
-            mTab.select();
-        }
+        selectSavedTab();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_CURRENT_TAB, mCurrentTab);
     }
 
     @Override
@@ -128,6 +139,13 @@ public class MainActivity extends AppCompatActivity implements TabLayout.OnTabSe
                 adapter.addFragment(fragment, String.format(Locale.getDefault(), "Category %d", i));
             }
         viewPager.setAdapter(adapter);
+    }
+
+    private void selectSavedTab(){
+        TabLayout.Tab mTab = mTabLayout.getTabAt(mCurrentTab);
+        if (mTab != null){
+            mTab.select();
+        }
     }
 
     private void setupDrawerContent(NavigationView navigationView) {
